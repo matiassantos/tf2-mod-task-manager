@@ -1,0 +1,83 @@
+{
+  // Configuración para VSCode - Archivo .vscode/settings.json
+  
+  // Configuración del Language Server de Lua (sumneko.lua)
+  "Lua.workspace.library": [
+    // Incluye las definiciones de tipos de Transport Fever 2
+    "./types"
+  ],
+  
+  // Configuración específica para Transport Fever 2
+  "Lua.diagnostics.globals": [
+    // APIs principales
+    "api",
+    "app", 
+    "game",
+    
+    // Funciones globales de TF2
+    "debugPrint",
+    "print",
+    
+    // Variables comunes en scripts de TF2
+    "data",
+    "params", 
+    "result",
+    "config",
+    "updateFn",
+    "guiUpdate",
+    "postRunFn",
+    
+    // Callbacks comunes
+    "callback",
+    "callbacks"
+  ],
+  
+  // Configuración de workspace
+  "Lua.workspace.checkThirdParty": false,
+  "Lua.workspace.maxPreload": 5000,
+  "Lua.workspace.preloadFileSize": 1000,
+  
+  // Diagnósticos específicos para TF2
+  "Lua.diagnostics.disable": [
+    "lowercase-global",  // TF2 usa muchas variables globales en minúscula
+    "undefined-global",  // Para APIs que se cargan dinámicamente
+    "missing-parameter", // TF2 tiene muchas funciones con parámetros opcionales
+    "unused-local"       // Útil durante desarrollo
+  ],
+  
+  // Runtime específico para TF2
+  "Lua.runtime.version": "Lua 5.4",
+  "Lua.runtime.special": {
+    "require": "require"
+  },
+  
+  // Configuración de formato
+  "Lua.format.enable": true,
+  "Lua.format.defaultConfig": {
+    "indent_style": "space",
+    "indent_size": "4",
+    "quote_style": "double",
+    "call_arg_parentheses": "keep"
+  },
+  
+  // Configuración de telemetría (opcional)
+  "Lua.telemetry.enable": false,
+  
+  // Configuración de archivos
+  "files.associations": {
+    "*.script": "lua",
+    "*.lua": "lua",
+    "*.con": "lua"
+  },
+  
+  // Configuración de snippets para TF2
+  "editor.tabCompletion": "on",
+  "editor.suggest.insertMode": "replace",
+  
+  // Auto-completado específico
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  }
+}

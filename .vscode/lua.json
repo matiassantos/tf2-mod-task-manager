@@ -1,0 +1,255 @@
+{
+  "Transport Fever 2 - Basic Script Template": {
+    "prefix": "tf2-script",
+    "body": [
+      "local data = {}",
+      "",
+      "-- Función de actualización (Engine State)",
+      "function data.update()",
+      "    -- Lógica de simulación aquí",
+      "    $1",
+      "end",
+      "",
+      "-- Función de actualización GUI (GUI State)",
+      "function data.guiUpdate()",
+      "    -- Lógica de interfaz aquí",
+      "    $2",
+      "end",
+      "",
+      "-- Función post-run (se ejecuta después de cargar)",
+      "function data.postRunFn()",
+      "    -- Inicialización aquí",
+      "    $3",
+      "end",
+      "",
+      "return data"
+    ],
+    "description": "Plantilla básica para script de Transport Fever 2"
+  },
+
+  "Transport Fever 2 - Construction Template": {
+    "prefix": "tf2-construction",
+    "body": [
+      "local data = {}",
+      "",
+      "function data.updateFn(params)",
+      "    local result = {}",
+      "    ",
+      "    -- Configuración básica",
+      "    result.config = {",
+      "        type = \"$1\",",
+      "        description = {",
+      "            name = _(\"$2\"),",
+      "            description = _(\"$3\")",
+      "        }",
+      "    }",
+      "    ",
+      "    -- Modelos",
+      "    result.models = {",
+      "        {",
+      "            id = \"$4\",",
+      "            transf = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }",
+      "        }",
+      "    }",
+      "    ",
+      "    return result",
+      "end",
+      "",
+      "return data"
+    ],
+    "description": "Plantilla para construcción de Transport Fever 2"
+  },
+
+  "Send Command with Callback": {
+    "prefix": "tf2-command",
+    "body": [
+      "local cmd = api.cmd.make.$1($2)",
+      "api.cmd.sendCommand(cmd, function(result, valid)",
+      "    if valid then",
+      "        print(\"Comando ejecutado exitosamente\")",
+      "        $3",
+      "    else",
+      "        print(\"Error al ejecutar comando\")",
+      "    end",
+      "end)"
+    ],
+    "description": "Enviar comando con callback"
+  },
+
+  "Get Entities by Type": {
+    "prefix": "tf2-entities",
+    "body": [
+      "local entities = game.interface.getEntities(",
+      "    { pos = {0, 0}, radius = math.huge },",
+      "    { type = \"$1\" }",
+      ")",
+      "",
+      "for i = 1, #entities do",
+      "    local entity = game.interface.getEntity(entities[i])",
+      "    $2",
+      "end"
+    ],
+    "description": "Obtener entidades por tipo"
+  },
+
+  "Create GUI Slider": {
+    "prefix": "tf2-slider",
+    "body": [
+      "local slider = api.gui.comp.Slider.new(\"$1\")",
+      "slider:setId(\"$2\")",
+      "slider:onValueChanged(function(value)",
+      "    $3",
+      "end)"
+    ],
+    "description": "Crear slider de GUI"
+  },
+
+  "Create GUI Window": {
+    "prefix": "tf2-window",
+    "body": [
+      "local window = api.gui.comp.Window.new(\"$1\")",
+      "window:addDefaultHandler()",
+      "window:setContent($2)",
+      "window:setVisible(true)"
+    ],
+    "description": "Crear ventana de GUI"
+  },
+
+  "Pathfinding Example": {
+    "prefix": "tf2-pathfinding",
+    "body": [
+      "local fromEdge = api.type.EdgeId.new($1, 0)",
+      "local toNode = api.type.NodeId.new($2, 0)",
+      "",
+      "local path = api.engine.util.pathfinding.findPath(",
+      "    { api.type.EdgeIdDirAndLength.new(fromEdge, true, 0.0) },",
+      "    { toNode },",
+      "    {},",
+      "    $3",
+      ")",
+      "",
+      "if path then",
+      "    print(\"Ruta encontrada\")",
+      "    $4",
+      "else",
+      "    print(\"No se encontró ruta\")",
+      "end"
+    ],
+    "description": "Ejemplo de pathfinding"
+  },
+
+  "Spawn Animal": {
+    "prefix": "tf2-spawn-animal",
+    "body": [
+      "local cmd = api.cmd.make.spawnAnimal(",
+      "    \"$1\",",
+      "    api.type.Vec2f.new($2, $3)",
+      ")",
+      "api.cmd.sendCommand(cmd, function(result, valid)",
+      "    if valid then",
+      "        print(\"Animal generado en posición ($2, $3)\")",
+      "    end",
+      "end)"
+    ],
+    "description": "Generar un animal"
+  },
+
+  "Get Stock Count": {
+    "prefix": "tf2-stock",
+    "body": [
+      "local stockCount = api.engine.system.simEntityAtStockSystem.getStockCount(",
+      "    $1, -- stockEntity",
+      "    $2  -- cargoType",
+      ")",
+      "print(\"Stock disponible:\", stockCount)"
+    ],
+    "description": "Obtener cantidad de stock"
+  },
+
+  "Vehicle Configuration": {
+    "prefix": "tf2-vehicle-config",
+    "body": [
+      "local config = api.type.TransportVehicleConfig.new()",
+      "local part = api.type.TransportVehiclePart.new()",
+      "",
+      "part.purchaseTime = $1",
+      "part.maintenanceState = $2",
+      "part.autoLoadConfig = { $3 }",
+      "",
+      "local vehiclePart = api.type.VehiclePart.new()",
+      "vehiclePart.modelId = $4",
+      "vehiclePart.loadConfig = { $5 }",
+      "",
+      "part.part = vehiclePart",
+      "config.vehicles = { part }"
+    ],
+    "description": "Configuración de vehículo"
+  },
+
+  "Component Check": {
+    "prefix": "tf2-component",
+    "body": [
+      "local component = api.engine.getComponent($1, api.type.ComponentType.$2)",
+      "if component then",
+      "    $3",
+      "else",
+      "    print(\"Componente no encontrado\")",
+      "end"
+    ],
+    "description": "Verificar y obtener componente"
+  },
+
+  "For Each Entity": {
+    "prefix": "tf2-foreach",
+    "body": [
+      "api.engine.forEachEntityWithComponent(function(entity, component)",
+      "    $2",
+      "end, api.type.ComponentType.$1)"
+    ],
+    "description": "Iterar sobre entidades con componente"
+  },
+
+  "Debug Print Table": {
+    "prefix": "tf2-debug",
+    "body": [
+      "debugPrint($1)",
+      "print(\"Debug info for $1:\")"
+    ],
+    "description": "Debug print de tabla"
+  },
+
+  "Mod Parameter Access": {
+    "prefix": "tf2-modparams",
+    "body": [
+      "local appConfig = api.util.getAppConfig()",
+      "local modParams = appConfig.modParams",
+      "",
+      "if modParams and modParams[\"$1\"] then",
+      "    local paramValue = modParams[\"$1\"][\"$2\"]",
+      "    $3",
+      "end"
+    ],
+    "description": "Acceder a parámetros del mod"
+  },
+
+  "Simple Proposal": {
+    "prefix": "tf2-proposal",
+    "body": [
+      "local proposal = api.type.SimpleProposal.new()",
+      "",
+      "-- Construcciones a agregar",
+      "proposal.constructionsToAdd = {",
+      "    $1",
+      "}",
+      "",
+      "-- Construcciones a remover",
+      "proposal.constructionsToRemove = {",
+      "    $2",
+      "}",
+      "",
+      "local cmd = api.cmd.make.buildProposal(proposal, true)",
+      "api.cmd.sendCommand(cmd)"
+    ],
+    "description": "Crear propuesta simple"
+  }
+}

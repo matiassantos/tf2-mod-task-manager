@@ -30,7 +30,7 @@ local loadCalled = false
 local savedTodo = {}
 
 local taskState = {
-    debugLog = false,
+	debugLog = false,
 	taskList = {},
 	windowContainer = nil,
 	todoListViewContainer = nil,
@@ -42,7 +42,15 @@ local taskState = {
 	showDone = false,
 	showInProgress = true,
 	showToDo = false,
-	showActive = true
+	showActive = true,
+	colorOptions = {
+		{ name = "Red", color = {1, 0, 0, 1} },
+		{ name = "Green", color = {0, 1, 0, 1} },
+		{ name = "Blue", color = {0, 0, 1, 1} },
+		{ name = "Yellow", color = {1, 1, 0, 1} },
+		{ name = "Purple", color = {0.6, 0, 0.6, 1} },
+		{ name = "Gray", color = {0.5, 0.5, 0.5, 1} }
+	}
 }
 
 local function flagForRefresh()
@@ -89,29 +97,39 @@ end
 
 local function sanitizeTaskShape(task)
 	local basicTaskShape = {
-			label = "Label",
-			status = taskStatuses.pending.state
+		title = "Untitled",
+		description = "",
+		color = {0.5, 0.5, 0.5, 1},
+		reference = nil,
+		referenceType = nil,
+		label = "Untitled",
+		status = taskStatuses.pending.state
 	}
-
-	if task and task.label then
-		basicTaskShape.label = tostring(task.label)
+	if task then
+		if task.title then basicTaskShape.title = tostring(task.title) end
+		if task.description then basicTaskShape.description = tostring(task.description) end
+		if task.color then basicTaskShape.color = task.color end
+		if task.reference then basicTaskShape.reference = task.reference end
+		if task.referenceType then basicTaskShape.referenceType = task.referenceType end
+		if task.label then basicTaskShape.label = tostring(task.label) end
+		if task.status then basicTaskShape.status = taskStatusFromString(task.status) end
 	end
-
-	if task and task.status then
-		basicTaskShape.status = taskStatusFromString(task.status)
-	end
-
-
 	return basicTaskShape
 end
 
 
-local function newTaskItem(taskLabel)
-	-- Sanitize the shape to be created
-	return {
-		label = tostring(taskLabel),
+local function newTaskItem(taskData)
+	-- taskData: {title, description, color, reference, referenceType}
+	local t = {
+		title = taskData.title or "Untitled",
+		description = taskData.description or "",
+		color = taskData.color or {0.5, 0.5, 0.5, 1},
+		reference = taskData.reference,
+		referenceType = taskData.referenceType,
+		label = taskData.title or taskData.label or "Untitled",
 		status = taskStatuses.pending.state
 	}
+	return sanitizeTaskShape(t)
 end
 
 
@@ -138,16 +156,21 @@ local function getCountTasksOnDisplay()
 	end
 end
 
+local function clearAllItemsFromListView(listView)
+	if not listView then return end
+	local numItems = listView:getNumItems()
+	for i = numItems, 1, -1 do
+		local item = listView:getItem(i - 1)
+		if item then
+			listView:removeItem(item)
+		end
+	end
+end
+
 local function clearTodoListView()
 	if taskState.todoListViewContainer then
 		trace("Clearing all items from todoListViewContainer")
-		local numItems = taskState.todoListViewContainer:getNumItems()
-		for i = numItems, 1, -1 do
-			local item = taskState.todoListViewContainer:getItem(i - 1)
-			if item then
-				taskState.todoListViewContainer:removeItem(item)
-			end
-		end
+		clearAllItemsFromListView(taskState.todoListViewContainer)
 		trace("Clearing all items SUCCESS")
 	else
 		trace("todoListViewContainer is not initialized")
@@ -178,17 +201,43 @@ end
 local function buildTaskCard(task)
 	local rowLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
 	local orderLabel = api.gui.comp.TextView.new(tostring(getCountTasksOnDisplay() + 1))
-	local taskLabel = api.gui.comp.TextView.new(tostring(task.label))
+	-- Color icon
+	local colorIcon = api.gui.comp.Component.new()
+	colorIcon:setMinimumSize(api.gui.util.Size.new(16, 16))
+	colorIcon:setMaximumSize(api.gui.util.Size.new(16, 16))
+	colorIcon:setStyle({ backgroundColor = task.color })
+	-- Title and description
+	local titleLabel = api.gui.comp.TextView.new(tostring(task.title or "Untitled"))
+	local descLabel = api.gui.comp.TextView.new(tostring(task.description or ""))
+	-- Action button
 	local actionButton = buildTaskActionButton(task)
-	rowLayout:addItem(actionButton)
+	rowLayout:addItem(colorIcon)
 	rowLayout:addItem(orderLabel)
-	rowLayout:addItem(taskLabel)
+	rowLayout:addItem(titleLabel)
+	rowLayout:addItem(descLabel)
+	rowLayout:addItem(actionButton)
+	-- Reference tag (industry/construction/city)
+	if task.reference and task.referenceType then
+		local refButton = api.gui.comp.Button.new(api.gui.comp.TextView.new("[" .. task.referenceType .. "]"), false)
+		refButton:onClick(function()
+			if api.engine.entityExists(task.reference) then
+				if api.gui.util.setCameraToEntity then
+					api.gui.util.setCameraToEntity(task.reference)
+				else
+					print("Camera function not available in this context.")
+				end
+			else
+				print("Referenced entity not found: " .. tostring(task.reference))
+			end
+		end)
+		rowLayout:addItem(refButton)
+	end
 	return rowLayout
 end
 
-local function saveNewTask(taskText)
-	trace("Saving new task: ".. taskText)
-	local newTask = newTaskItem(taskText)
+local function saveNewTask(taskData)
+	trace("Saving new task: ".. (taskData.title or "Untitled"))
+	local newTask = newTaskItem(taskData)
 	trace("Saving the task")
 	table.insert(taskState.todoTasksList, newTask)
 	trace("Task saved")
@@ -196,7 +245,6 @@ local function saveNewTask(taskText)
 	trace("Calling Persist")
 	persistingChanges()
 	trace("Persist call done. moving on to adding on screen")
-
 	local taskRowLayout = buildTaskCard(newTask)
 	addTaskRow(taskRowLayout)
 end
@@ -247,14 +295,13 @@ end
 
 
 local function createViewWindow()
-    local windowLayout = api.gui.layout.BoxLayout.new("VERTICAL")
-    local window = api.gui.comp.Window.new(_('Task Management v1'), windowLayout)
-    window:setResizable(true)
+	local windowLayout = api.gui.layout.BoxLayout.new("VERTICAL")
+	local window = api.gui.comp.Window.new(_('Task Management v1'), windowLayout)
+	window:setResizable(true)
 	window:setPinButtonVisible(true)
-    window:addHideOnCloseHandler()
+	window:addHideOnCloseHandler()
 	-- Build the top navbar
 	local topNavbarLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
-	-- local toDoButton = util.newButton("To-Do", "ui/button/small/pause.tga")
 	local toDoButton = api.gui.comp.CheckBox.new("To-Do")
 	toDoButton:setSelected(taskState.showToDo or false, false)
 	toDoButton:onToggle(function ()
@@ -273,51 +320,77 @@ local function createViewWindow()
 		taskState.showActive = activeButton:isSelected()
 		flagForRefresh()
 	end)
-	-- local inProgressButton = util.newButton("In Progress", "ui/button/small/vehicle_replace_active.tga")
 	local DoneButton = api.gui.comp.CheckBox.new("Done")
 	DoneButton:setSelected(taskState.showDone, false)
 	DoneButton:onToggle(function ()
 		taskState.showDone = DoneButton:isSelected()
 		flagForRefresh()
 	end)
-
-	-- local DoneButton = util.newButton("Done", "ui/button/small/accept.tga")
 	topNavbarLayout:addItem(toDoButton)
 	topNavbarLayout:addItem(inProgressButton)
-	-- Upcoming state to handle
 	-- topNavbarLayout:addItem(activeButton)
 	topNavbarLayout:addItem(DoneButton)
-
 	windowLayout:addItem(topNavbarLayout)
-
-	local taskListLayout = api.gui.layout.BoxLayout.new("VERTICAL")
-	-- Try to build a better looking list of tasks. Component List for example
-	windowLayout:addItem(taskListLayout)
-	-- add input and confirm
+	-- Use ListView for the task list
+	local taskListView = api.gui.comp.ListView.new()
+	windowLayout:addItem(taskListView)
+	-- Input fields for new task
 	local bottomLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
-	local taskInputField = api.gui.comp.TextInputField.new("Task")
-	-- taskInputField:setFocus()
-	local minInputFieldSize = api.gui.util.Size.new(300, 32)
-	taskInputField:setMinimumSize(minInputFieldSize)
-	local saveButton = util.newButton("To-Do", "ui/button/small/metadata_add.tga")
-	saveButton:onClick(function ()
-		local taskText = taskInputField:getText()
-		saveNewTask(taskText)
+	local titleInput = api.gui.comp.TextInputField.new("Title")
+	titleInput:setMinimumSize(api.gui.util.Size.new(120, 32))
+	local descInput = api.gui.comp.TextInputField.new("Description")
+	descInput:setMinimumSize(api.gui.util.Size.new(180, 32))
+	-- Color dropdown
+	local colorDropdown = api.gui.comp.ComboBox.new()
+	for i, opt in ipairs(taskState.colorOptions) do
+		colorDropdown:addItem(opt.name)
+	end
+	colorDropdown:setSelected(1, false)
+	-- Reference type dropdown
+	local refTypeDropdown = api.gui.comp.ComboBox.new()
+	refTypeDropdown:addItem("None")
+	refTypeDropdown:addItem("Industry")
+	refTypeDropdown:addItem("Construction")
+	refTypeDropdown:addItem("City")
+	refTypeDropdown:setSelected(1, false)
+	local refIdInput = api.gui.comp.TextInputField.new("Reference ID (entity)")
+	refIdInput:setMinimumSize(api.gui.util.Size.new(80, 32))
+	local saveButton = util.newButton("Add Task", "ui/button/small/metadata_add.tga")
+	saveButton:onClick(function()
+		local colorIdx = colorDropdown:getSelectedIndex() or 1
+		local color = taskState.colorOptions[colorIdx] and taskState.colorOptions[colorIdx].color or {0.5,0.5,0.5,1}
+		local refTypeIdx = refTypeDropdown:getSelectedIndex() or 1
+		local refType = (refTypeIdx == 1) and nil or refTypeDropdown:getItem(refTypeIdx)
+		local refId = tonumber(refIdInput:getText())
+		local taskData = {
+			title = titleInput:getText(),
+			description = descInput:getText(),
+			color = color,
+			reference = refId,
+			referenceType = refType
+		}
+		saveNewTask(taskData)
+		-- Optionally clear fields
+		titleInput:setText("")
+		descInput:setText("")
+		refIdInput:setText("")
+		colorDropdown:setSelected(1, false)
+		refTypeDropdown:setSelected(1, false)
 	end)
-	bottomLayout:addItem(taskInputField)
+	bottomLayout:addItem(titleInput)
+	bottomLayout:addItem(descInput)
+	bottomLayout:addItem(colorDropdown)
+	bottomLayout:addItem(refTypeDropdown)
+	bottomLayout:addItem(refIdInput)
 	bottomLayout:addItem(saveButton)
 	windowLayout:addItem(bottomLayout)
-
-	taskState.todoListViewContainer = taskListLayout
+	taskState.todoListViewContainer = taskListView
 	taskState.windowContainer = windowLayout;
-
-	-- If tasks need to be refreshed after loading, do it now
 	if taskState.needsRefresh then
 		refreshTodoListView()
 		taskState.needsRefresh = false
 	end
-
-    return window
+	return window
 end
 
 local gui = require "gui"

@@ -1,0 +1,499 @@
+---@diagnostic disable: lowercase-global
+
+-- Transport Fever 2 API Type Definitions
+-- Para usar IntelliSense en VSCode, incluye este archivo en tu proyecto
+
+---@class api
+api = {}
+
+---@class app
+app = {}
+
+---@class game
+game = {}
+
+-- ========================================
+-- API.CMD - Comandos del juego
+-- ========================================
+
+---@class api.cmd
+api.cmd = {}
+
+---@class api.cmd.make
+api.cmd.make = {}
+
+---Envía un comando para ser ejecutado
+---@param command table El comando a ejecutar
+---@param callback? function Función de callback que recibe (cmd, valid)
+---@return function Callback para cancelar el comando
+function api.cmd.sendCommand(command, callback) end
+
+---Crea un comando para reemplazar un vehículo
+---@param vehicleEntity integer ID de la entidad del vehículo
+---@param config TransportVehicleConfig Configuración del nuevo vehículo
+---@return table Comando SendToDepot
+function api.cmd.make.replaceVehicle(vehicleEntity, config) end
+
+---Crea un comando para enviar un vehículo al depósito
+---@param vehicleEntity integer ID de la entidad del vehículo
+---@param sellOnArrival boolean Si se vende al llegar al depósito
+---@return table Comando SendToDepot
+function api.cmd.make.sendToDepot(vehicleEntity, sellOnArrival) end
+
+---Crea un comando para enviar evento de script
+---@param fileName string Nombre del archivo de script
+---@param id string Identificador del elemento
+---@param data? table Datos del evento
+---@return table Comando SendScriptEvent
+function api.cmd.make.sendScriptEvent(fileName, id, data) end
+
+---Crea un comando para establecer estado de animal
+---@param animalEntity integer ID de la entidad del animal
+---@param movementType integer Tipo de movimiento
+---@param targetChangedElapsed number Tiempo desde cambio de objetivo
+---@param invalidTileElapsed number Tiempo en área inválida
+---@param movementSpeed number Velocidad de movimiento
+---@param angularSpeed number Velocidad angular
+---@return table Comando SetAnimalState
+function api.cmd.make.setAnimalState(animalEntity, movementType, targetChangedElapsed, invalidTileElapsed, movementSpeed, angularSpeed) end
+
+---Crea un comando para generar un animal
+---@param modelPath string Ruta al modelo del animal
+---@param position Vec2f Posición donde generar el animal
+---@return table Comando SpawnAnimal
+function api.cmd.make.spawnAnimal(modelPath, position) end
+
+-- ========================================
+-- API.ENGINE - Estado del motor
+-- ========================================
+
+---@class api.engine
+api.engine = {}
+
+---@class api.engine.system
+api.engine.system = {}
+
+---@class api.engine.util
+api.engine.util = {}
+
+---@class api.engine.util.pathfinding
+api.engine.util.pathfinding = {}
+
+---@class api.engine.terrain
+api.engine.terrain = {}
+
+---Verifica si una entidad existe
+---@param entity integer ID de la entidad
+---@return boolean True si la entidad existe
+function api.engine.entityExists(entity) end
+
+---Obtiene un componente de una entidad
+---@param entity integer ID de la entidad
+---@param componentType integer Tipo de componente (ComponentType)
+---@return table|nil El componente si existe
+function api.engine.getComponent(entity, componentType) end
+
+---Itera sobre cada entidad en el motor
+---@param callback fun(entity: integer) Función de callback para cada entidad
+function api.engine.forEachEntity(callback) end
+
+---Itera sobre entidades con un componente específico
+---@param callback fun(entity: integer, component: table) Función de callback
+---@param componentType integer Tipo de componente para filtrar
+function api.engine.forEachEntityWithComponent(callback, componentType) end
+
+---Obtiene la revisión de una entidad
+---@param entity integer ID de la entidad
+---@return integer Número de revisión
+function api.engine.getEntityRevision(entity) end
+
+-- Sistemas
+---@class AircraftMoveSystem
+api.engine.system.aircraftMoveSystem = {}
+
+---@class TransportNetworkSystem
+api.engine.system.transportNetworkSystem = {}
+
+---@class TransportVehicleSystem
+api.engine.system.transportVehicleSystem = {}
+
+---@class SimEntityAtStockSystem
+api.engine.system.simEntityAtStockSystem = {}
+
+---Obtiene la cantidad de stock de una entidad
+---@param stockEntity integer ID de la entidad de stock
+---@param cargoType integer Tipo de carga
+---@return number Cantidad de stock
+function api.engine.system.simEntityAtStockSystem.getStockCount(stockEntity, cargoType) end
+
+-- Utilidades de pathfinding
+---Encuentra una ruta entre bordes y nodos
+---@param fromEdges table Lista de EdgeIdDirAndLength
+---@param toNodes table Lista de NodeId
+---@param options table Opciones de pathfinding
+---@param maxDistance number Distancia máxima
+---@return table|nil Ruta encontrada o nil
+function api.engine.util.pathfinding.findPath(fromEdges, toNodes, options, maxDistance) end
+
+-- Terreno
+---Verifica si una coordenada es válida
+---@param coordinate Vec2f Coordenada a verificar
+---@return boolean True si es válida
+function api.engine.terrain.isValidCoordinate(coordinate) end
+
+-- ========================================
+-- API.GUI - Interfaz gráfica
+-- ========================================
+
+---@class api.gui
+api.gui = {}
+
+---@class api.gui.comp
+api.gui.comp = {}
+
+---@class api.gui.layout
+api.gui.layout = {}
+
+---@class api.gui.util
+api.gui.util = {}
+
+---Obtiene la GameUI (solo en GUI State)
+---@return table GameUI
+function api.gui.getGameUI() end
+
+---Obtiene el tiempo de procesamiento de comandos
+---@return number Tiempo en milisegundos
+function api.gui.getCommandTime() end
+
+---Obtiene el tiempo de sincronización
+---@return number Tiempo de sincronización
+function api.gui.getSyncTime() end
+
+---Obtiene el tiempo de simulación
+---@return number Tiempo de simulación
+function api.gui.getSimulationTime() end
+
+-- Componentes GUI
+---@class Component
+---@field setId fun(self: Component, id: string): Component
+---@field setName fun(self: Component, name: string): Component
+---@field setTooltip fun(self: Component, text: string): Component
+---@field setVisible fun(self: Component, visible: boolean): Component
+---@field setStyleClass fun(self: Component, classes: string[]): Component
+---@field setTransparent fun(self: Component, transparent: boolean): Component
+local Component = {}
+
+---@class Slider : Component
+---@field onValueChanged fun(self: Slider, callback: fun(value: number)): Connection
+local Slider = {}
+
+---Crea un nuevo slider
+---@param orientation "HORIZONTAL"|"VERTICAL" Orientación del slider
+---@return Slider
+function api.gui.comp.Slider.new(orientation) end
+
+---@class Window : Component
+---@field addDefaultHandler fun(self: Window): Window
+---@field close fun(self: Window): Window
+---@field getContent fun(self: Window): Component
+---@field isAttached fun(self: Window): boolean
+---@field isPinnable fun(self: Window): boolean
+---@field isPinned fun(self: Window): boolean
+---@field maximize fun(self: Window): Window
+---@field minimize fun(self: Window): Window
+---@field setContent fun(self: Window, content: Component): Window
+local Window = {}
+
+---Crea una nueva ventana
+---@param title string Título de la ventana
+---@return Window
+function api.gui.comp.Window.new(title) end
+
+-- Utilidades GUI
+---@class Rect
+---@field x number
+---@field y number
+---@field w number
+---@field h number
+---@field contains fun(self: Rect, pos: Vec2f): boolean
+---@field intersects fun(self: Rect, other: Rect): boolean
+local Rect = {}
+
+---Crea un nuevo rectángulo
+---@param x? number Coordenada X
+---@param y? number Coordenada Y
+---@param w? number Ancho
+---@param h? number Alto
+---@return Rect
+function api.gui.util.Rect.new(x, y, w, h) end
+
+---Obtiene un elemento por ID
+---@param id string ID del elemento UI
+---@return Component|nil El componente si existe
+function api.gui.util.getById(id) end
+
+-- ========================================
+-- API.TYPE - Tipos y estructuras
+-- ========================================
+
+---@class api.type
+api.type = {}
+
+-- ComponentType enum
+---@class ComponentType
+api.type.ComponentType = {
+    ACCOUNT = 0,
+    AIRCRAFT = 1,
+    ANIMAL = 2,
+    ASSET_GROUP = 3,
+    ASSET_GROUP_AUTOREMOVE = 4,
+    BASE_EDGE = 5,
+    BASE_EDGE_STREET = 6,
+    BASE_EDGE_TRACK = 7,
+    BASE_NODE = 8,
+    BASE_NODE_TRAFFIC_LIGHT = 9,
+    BASE_PARALLEL_STRIP = 10,
+    BUILD_COST = 11,
+    COLLIDER_LIST = 12,
+    CONSTRUCTION = 13,
+    EMISSION_GRID = 14,
+    GAME_SPEED = 15,
+    GAME_TIME = 16,
+    TRANSPORT_VEHICLE = 67,
+    -- ... más tipos disponibles
+}
+
+-- Vectores
+---@class Vec2i
+---@field x integer
+---@field y integer
+local Vec2i = {}
+
+---Crea un nuevo vector 2D de enteros
+---@param x? integer Componente X
+---@param y? integer Componente Y
+---@return Vec2i
+function api.type.Vec2i.new(x, y) end
+
+---@class Vec2f
+---@field x number
+---@field y number
+local Vec2f = {}
+
+---Crea un nuevo vector 2D de flotantes
+---@param x? number Componente X
+---@param y? number Componente Y
+---@return Vec2f
+function api.type.Vec2f.new(x, y) end
+
+---@class Vec3f
+---@field x number
+---@field y number
+---@field z number
+local Vec3f = {}
+
+---Crea un nuevo vector 3D
+---@param x? number Componente X
+---@param y? number Componente Y
+---@param z? number Componente Z
+---@return Vec3f
+function api.type.Vec3f.new(x, y, z) end
+
+---@class Vec4f
+---@field x number
+---@field y number
+---@field z number
+---@field w number
+local Vec4f = {}
+
+---Crea un nuevo vector 4D
+---@param x? number Componente X
+---@param y? number Componente Y
+---@param z? number Componente Z
+---@param w? number Componente W
+---@return Vec4f
+function api.type.Vec4f.new(x, y, z, w) end
+
+---@class Mat4f
+local Mat4f = {}
+
+---Crea una nueva matriz 4x4
+---@return Mat4f
+function api.type.Mat4f.new() end
+
+-- Identificadores
+---@class EdgeId
+local EdgeId = {}
+
+---Crea un nuevo ID de borde
+---@param edgeEntity integer ID de la entidad del borde
+---@param index integer Índice del borde
+---@return EdgeId
+function api.type.EdgeId.new(edgeEntity, index) end
+
+---@class NodeId
+local NodeId = {}
+
+---Crea un nuevo ID de nodo
+---@param nodeEntity integer ID de la entidad del nodo
+---@param index integer Índice del nodo
+---@return NodeId
+function api.type.NodeId.new(nodeEntity, index) end
+
+---@class EdgeIdDirAndLength
+local EdgeIdDirAndLength = {}
+
+---Crea un EdgeIdDirAndLength
+---@param edgeId EdgeId ID del borde
+---@param direction boolean Dirección del borde
+---@param length number Longitud
+---@return EdgeIdDirAndLength
+function api.type.EdgeIdDirAndLength.new(edgeId, direction, length) end
+
+-- Configuraciones de vehículos
+---@class TransportVehicleConfig
+local TransportVehicleConfig = {}
+
+---Crea una nueva configuración de vehículo de transporte
+---@return TransportVehicleConfig
+function api.type.TransportVehicleConfig.new() end
+
+---@class TransportVehiclePart
+---@field purchaseTime number Tiempo de compra
+---@field maintenanceState number Estado de mantenimiento (0.0-1.0)
+---@field targetMaintenanceState number Estado objetivo de mantenimiento
+---@field autoLoadConfig integer[] Configuración de carga automática
+local TransportVehiclePart = {}
+
+---Crea una nueva parte de vehículo de transporte
+---@return TransportVehiclePart
+function api.type.TransportVehiclePart.new() end
+
+---@class VehiclePart
+---@field modelId integer ID del modelo
+---@field loadConfig integer[] Configuración de carga
+local VehiclePart = {}
+
+---Crea una nueva parte de vehículo
+---@return VehiclePart
+function api.type.VehiclePart.new() end
+
+-- Propuestas
+---@class SimpleProposal
+---@field constructionsToAdd table[] Lista de construcciones a agregar
+---@field constructionsToRemove integer[] Lista de IDs de construcciones a remover
+---@field old2new table Mapeo de entidades viejas a nuevas
+local SimpleProposal = {}
+
+---Crea una nueva propuesta simple
+---@return SimpleProposal
+function api.type.SimpleProposal.new() end
+
+---@class ConstructionEntity
+---@field fileName string Nombre del archivo de construcción
+---@field params table Parámetros de la construcción
+---@field transf Mat4f Transformación local en el mundo
+---@field name string Nombre para la entidad resultante
+---@field playerEntity integer Entidad del jugador propietario
+---@field headquarters integer Entidad del cuartel general
+local ConstructionEntity = {}
+
+-- Conexiones
+---@class Connection
+local Connection = {}
+
+-- ========================================
+-- API.RES - Recursos del juego
+-- ========================================
+
+---@class api.res
+api.res = {}
+
+---@class api.res.constructionRep
+api.res.constructionRep = {}
+
+---Obtiene todas las construcciones disponibles
+---@return string[] Lista de nombres de archivos de construcción
+function api.res.constructionRep.getAll() end
+
+-- ========================================
+-- API.UTIL - Utilidades generales
+-- ========================================
+
+---@class api.util
+api.util = {}
+
+---Obtiene la configuración de la aplicación
+---@return table Configuración que incluye modParams y lista de mods activos
+function api.util.getAppConfig() end
+
+-- ========================================
+-- GAME INTERFACE (Transport Fever 1 style)
+-- ========================================
+
+---@class game.interface
+game.interface = {}
+
+---Obtiene entidades en un área
+---@param area {pos: number[], radius: number} Área de búsqueda
+---@param filter {type: string} Filtro por tipo de entidad
+---@return integer[] Lista de IDs de entidades
+function game.interface.getEntities(area, filter) end
+
+---Obtiene información de una entidad
+---@param entityId integer ID de la entidad
+---@return table Información de la entidad
+function game.interface.getEntity(entityId) end
+
+-- ========================================
+-- FUNCIONES GLOBALES
+-- ========================================
+
+---Imprime debug de una tabla
+---@param table table Tabla a imprimir
+function debugPrint(table) end
+
+---Función print estándar
+---@param ... any Valores a imprimir
+function print(...) end
+
+-- ========================================
+-- EJEMPLOS DE USO
+-- ========================================
+
+--[[
+-- Ejemplo 1: Crear un slider
+local slider = api.gui.comp.Slider.new("HORIZONTAL")
+slider:onValueChanged(function(value)
+    print("Nuevo valor:", value)
+end)
+
+-- Ejemplo 2: Enviar comando
+local cmd = api.cmd.make.spawnAnimal("animal/bird_eagle.mdl", api.type.Vec2f.new(50, 50))
+api.cmd.sendCommand(cmd, function(result, valid)
+    if valid then
+        print("Animal creado exitosamente")
+    end
+end)
+
+-- Ejemplo 3: Obtener entidades
+local buildings = game.interface.getEntities(
+    { pos = {0, 0}, radius = math.huge },
+    { type = "SIM_BUILDING" }
+)
+
+for i = 1, #buildings do
+    local entity = game.interface.getEntity(buildings[i])
+    print("Edificio:", entity.fileName)
+end
+
+-- Ejemplo 4: Pathfinding
+local edge1 = api.type.EdgeId.new(170679, 0)
+local node1 = api.type.NodeId.new(171540, 0)
+local path = api.engine.util.pathfinding.findPath(
+    { api.type.EdgeIdDirAndLength.new(edge1, true, 0.0) },
+    { node1 },
+    {},
+    1000
+)
+--]]
