@@ -1,0 +1,30 @@
+About to get layout
+
+Got layout
+
+Building window
+
+Built first button group
+
+About to create elevation button group
+
+Finished create elevation button group
+
+Added mouseListener
+
+========================> Task Maangewr Invoking create Componentes
+
+[TAsk Manananager] Create Components Invoked ! 
+
+An error was caught	[string "mods/tf2-mod-task-manager/res/config/game_script/task_management_core.lua"]:335: attempt to index field 'ListView' (a nil value)
+
+stack traceback:
+	[string "mods/tf2-mod-task-manager/res/config/game_script/task_management_core.lua"]:16: in function '__index'
+	[string "mods/tf2-mod-task-manager/res/config/game_script/task_management_core.lua"]:335: in function 'createViewWindow'
+	[string "mods/tf2-mod-task-manager/res/config/game_script/task_management_core.lua"]:402: in function <[string "mods/tf2-mod-task-manager/res/config/game_script/task_management_core.lua"]:397>
+	[C]: in function 'xpcall'
+	[string "mods/tf2-mod-task-manager/res/config/game_script/task_management_core.lua"]:443: in function <[string "mods/tf2-mod-task-manager/res/config/game_script/task_management_core.lua"]:441>
+
+createComponents start, lua used memory=	7782504
+
+createComponents end, lua used memory=	7786278
