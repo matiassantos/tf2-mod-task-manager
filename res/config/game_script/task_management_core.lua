@@ -30,11 +30,12 @@ local loadCalled = false
 local savedTodo = {}
 
 local taskState = {
-	debugLog = false,
+	debugLog = true,
 	taskList = {},
 	windowContainer = nil,
 	todoListViewContainer = nil,
 	todoTasksList = {},
+	taskRowComponents = {}, -- Track UI rows for BoxLayout
 	needsRefresh = false,
 	isRefreshing = false,
 	isFirstRun = true,
@@ -143,34 +144,45 @@ local function persistingChanges()
 end
 
 local function addTaskRow(taskRow)
+	trace("addTaskRow called")
 	if taskState.todoListViewContainer then
+		trace("Adding task row to todoListViewContainer")
+		table.insert(taskState.taskRowComponents, taskRow)
 		taskState.todoListViewContainer:addItem(taskRow)
+	else
+		trace("todoListViewContainer is nil in addTaskRow")
 	end
 end
 
 local function getCountTasksOnDisplay()
-	if taskState.todoListViewContainer then
-		return taskState.todoListViewContainer:getNumItems()
-	else
-		return 0
-	end
+	local n = #taskState.taskRowComponents
+	trace("getCountTasksOnDisplay: " .. tostring(n))
+	return n
 end
 
-local function clearAllItemsFromListView(listView)
-	if not listView then return end
-	local numItems = listView:getNumItems()
-	for i = numItems, 1, -1 do
-		local item = listView:getItem(i - 1)
+-- removed duplicate clearAllItemsFromListView
+local function clearAllItemsFromBoxLayout(layout)
+	trace("clearAllItemsFromBoxLayout called")
+	if not layout then trace("clearAllItemsFromBoxLayout: layout is nil"); return end
+	if not layout.removeItem then
+		trace("clearAllItemsFromBoxLayout: layout missing removeItem method")
+		return
+	end
+	for i = #taskState.taskRowComponents, 1, -1 do
+		local item = taskState.taskRowComponents[i]
 		if item then
-			listView:removeItem(item)
+			layout:removeItem(item)
+			trace("Removed item from BoxLayout at index " .. tostring(i))
 		end
+		table.remove(taskState.taskRowComponents, i)
 	end
 end
 
 local function clearTodoListView()
+	trace("clearTodoListView called")
 	if taskState.todoListViewContainer then
-		trace("Clearing all items from todoListViewContainer")
-		clearAllItemsFromListView(taskState.todoListViewContainer)
+		trace("clearTodoListView: calling clearAllItemsFromBoxLayout")
+		clearAllItemsFromBoxLayout(taskState.todoListViewContainer)
 		trace("Clearing all items SUCCESS")
 	else
 		trace("todoListViewContainer is not initialized")
@@ -295,6 +307,7 @@ end
 
 
 local function createViewWindow()
+	trace("createViewWindow: start")
 	local windowLayout = api.gui.layout.BoxLayout.new("VERTICAL")
 	local window = api.gui.comp.Window.new(_('Task Management v1'), windowLayout)
 	window:setResizable(true)
@@ -331,9 +344,9 @@ local function createViewWindow()
 	-- topNavbarLayout:addItem(activeButton)
 	topNavbarLayout:addItem(DoneButton)
 	windowLayout:addItem(topNavbarLayout)
-	-- Use ListView for the task list
-	local taskListView = api.gui.comp.ListView.new()
-	windowLayout:addItem(taskListView)
+	-- Use BoxLayout for the task list
+	local taskListLayout = api.gui.layout.BoxLayout.new("VERTICAL")
+	windowLayout:addItem(taskListLayout)
 	-- Input fields for new task
 	local bottomLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
 	local titleInput = api.gui.comp.TextInputField.new("Title")
@@ -357,6 +370,7 @@ local function createViewWindow()
 	refIdInput:setMinimumSize(api.gui.util.Size.new(80, 32))
 	local saveButton = util.newButton("Add Task", "ui/button/small/metadata_add.tga")
 	saveButton:onClick(function()
+		trace("saveButton:onClick called")
 		local colorIdx = colorDropdown:getSelectedIndex() or 1
 		local color = taskState.colorOptions[colorIdx] and taskState.colorOptions[colorIdx].color or {0.5,0.5,0.5,1}
 		local refTypeIdx = refTypeDropdown:getSelectedIndex() or 1
@@ -369,6 +383,7 @@ local function createViewWindow()
 			reference = refId,
 			referenceType = refType
 		}
+		trace("saveButton:onClick taskData: " .. tostring(taskData.title) .. ", " .. tostring(taskData.description))
 		saveNewTask(taskData)
 		-- Optionally clear fields
 		titleInput:setText("")
@@ -384,12 +399,13 @@ local function createViewWindow()
 	bottomLayout:addItem(refIdInput)
 	bottomLayout:addItem(saveButton)
 	windowLayout:addItem(bottomLayout)
-	taskState.todoListViewContainer = taskListView
+	taskState.todoListViewContainer = taskListLayout
 	taskState.windowContainer = windowLayout;
 	if taskState.needsRefresh then
 		refreshTodoListView()
 		taskState.needsRefresh = false
 	end
+	trace("createViewWindow: end")
 	return window
 end
 
