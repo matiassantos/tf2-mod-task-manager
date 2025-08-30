@@ -51,6 +51,12 @@ local taskState = {
 		{ name = "Yellow", color = {1, 1, 0, 1} },
 		{ name = "Purple", color = {0.6, 0, 0.6, 1} },
 		{ name = "Gray", color = {0.5, 0.5, 0.5, 1} }
+	},
+	referenceTypeOptions = {
+		"None",
+		"Industry",
+		"Construction",
+		"City"
 	}
 }
 
@@ -361,10 +367,9 @@ local function createViewWindow()
 	colorDropdown:setSelected(1, false)
 	-- Reference type dropdown
 	local refTypeDropdown = api.gui.comp.ComboBox.new()
-	refTypeDropdown:addItem("None")
-	refTypeDropdown:addItem("Industry")
-	refTypeDropdown:addItem("Construction")
-	refTypeDropdown:addItem("City")
+	for i, opt in ipairs(taskState.referenceTypeOptions) do
+		refTypeDropdown:addItem(opt)
+	end
 	refTypeDropdown:setSelected(1, false)
 	local refIdInput = api.gui.comp.TextInputField.new("Reference ID (entity)")
 	refIdInput:setMinimumSize(api.gui.util.Size.new(80, 32))
@@ -374,7 +379,7 @@ local function createViewWindow()
 		local colorIdx = colorDropdown:getCurrentIndex() or 1
 		local color = taskState.colorOptions[colorIdx] and taskState.colorOptions[colorIdx].color or {0.5,0.5,0.5,1}
 		local refTypeIdx = refTypeDropdown:getCurrentIndex() or 1
-		local refType = (refTypeIdx == 1) and nil or refTypeDropdown:getItem(refTypeIdx)
+		local refType = (refTypeIdx == 1) and nil or taskState.referenceTypeOptions[refTypeIdx]
 		local refId = tonumber(refIdInput:getText())
 		local taskData = {
 			title = titleInput:getText(),
