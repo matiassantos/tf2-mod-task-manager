@@ -233,8 +233,8 @@ local function buildTaskCard(task)
 		local refButton = api.gui.comp.Button.new(api.gui.comp.TextView.new("[" .. task.referenceType .. "]"), false)
 		refButton:onClick(function()
 			if api.engine.entityExists(task.reference) then
-				if api.gui.util.setCameraToEntity then
-					api.gui.util.setCameraToEntity(task.reference)
+				if api.gui.util.CameraController.focus then
+					api.gui.util.CameraController.focus(task.reference)
 				else
 					print("Camera function not available in this context.")
 				end
@@ -283,7 +283,7 @@ end
 
 local function refreshTodoListView()
 	if taskState.isRefreshing then
-		trace("Already refreshing, skipping refreshTodoListView call")
+		-- trace("Already refreshing, skipping refreshTodoListView call")
 		return
 	end
 
@@ -371,9 +371,9 @@ local function createViewWindow()
 	local saveButton = util.newButton("Add Task", "ui/button/small/metadata_add.tga")
 	saveButton:onClick(function()
 		trace("saveButton:onClick called")
-		local colorIdx = colorDropdown:getSelectedIndex() or 1
+		local colorIdx = colorDropdown:getCurrentIndex() or 1
 		local color = taskState.colorOptions[colorIdx] and taskState.colorOptions[colorIdx].color or {0.5,0.5,0.5,1}
-		local refTypeIdx = refTypeDropdown:getSelectedIndex() or 1
+		local refTypeIdx = refTypeDropdown:getCurrentIndex() or 1
 		local refType = (refTypeIdx == 1) and nil or refTypeDropdown:getItem(refTypeIdx)
 		local refId = tonumber(refIdInput:getText())
 		local taskData = {
